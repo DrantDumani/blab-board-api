@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_ENV=test && jest",
+    "start": "node --watch app.js",
+    "dev": "NODE_ENV=development && node --watch app.js"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +24,7 @@
     "passport-local": "^1.0.0"
   },
   "devDependencies": {
+    "jest": "^29.7.0",
     "prisma": "^5.19.1",
     "supertest": "^7.0.0"
   }
