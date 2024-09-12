@@ -19,7 +19,7 @@ model Users {
   username String @db.VarChar(20) @unique
   email String @db.VarChar(320) @unique
   pw String
-  about String @default("")
+  about String @db.VarChar(200) @default("")
   pfp String @default("")
   pfp_id String @default("")
   boards Boards[] @relation("UserBoards")

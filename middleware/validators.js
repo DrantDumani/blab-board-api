@@ -20,7 +20,26 @@ exports.singUpValidationRules = () => {
   ];
 };
 
-exports.validateSignUp = (req, res, next) => {
+exports.loginValidationRules = () => {
+  return [
+    body("email", "Please enter an email")
+      .isString()
+      .trim()
+      .isLength({ min: 1 }),
+    body("pw", "Please enter a password").isString().trim().isLength(),
+  ];
+};
+
+exports.updateUserValidationRules = () => {
+  return [
+    body("about", "About must be no longer than 200 characters")
+      .isString()
+      .trim()
+      .isLength({ max: 200 }),
+  ];
+};
+
+exports.validateFields = (req, res, next) => {
   const errors = validationResult(req);
   if (errors.isEmpty()) return next();
   else return res.status(400).json(errors);

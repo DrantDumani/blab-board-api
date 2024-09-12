@@ -2,6 +2,7 @@ const user = require("../routers/userRouter");
 const request = require("supertest");
 const express = require("express");
 const client = require("../prisma/client");
+const bcrypt = require("bcrypt");
 
 const app = express();
 
@@ -9,14 +10,27 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use("/", user);
 
+let test_user = null;
+let token = "";
+
 beforeAll(async () => {
-  await client.users.create({
+  const user = await client.users.create({
     data: {
       username: "foo",
       email: "bar@baz.com",
-      pw: "password",
+      pw: await bcrypt.hash("password", 10),
     },
   });
+  test_user = user;
+
+  request(app)
+    .post("/auth")
+    .type("form")
+    .send({ email: "bar@baz.com", pw: "password" })
+    .end((err, res) => {
+      if (err) return done(err);
+      token = res.body.token;
+    });
 });
 
 afterAll(async () => {
@@ -130,5 +144,89 @@ describe("Log in Route", () => {
       .type("form")
       .send({ email: "", pw: "" })
       .expect(400, done);
+  });
+
+  it("Sends 401 Forbidden if user submits incorrect fields", (done) => {
+    request(app)
+      .post("/auth")
+      .type("form")
+      .send({ email: "not@good.com", pw: "wrong" })
+      .expect(401, done);
+  });
+
+  it("Sends user token on successful login", (done) => {
+    request(app)
+      .post("/auth")
+      .type("form")
+      .send({ email: "bar@baz.com", pw: "password" })
+      .expect(200)
+      .end((err, res) => {
+        if (err) return done(err);
+        expect(res.body.token).toBeDefined();
+        return done();
+      });
+  });
+});
+
+describe("Get user info", () => {
+  it("Returns 401 if user is not logged in", (done) => {
+    request(app).get(`/${test_user.id}`).expect(401, done);
+  });
+
+  it("Returns user info if authorized", (done) => {
+    request(app)
+      .get(`/${test_user.id}`)
+      .auth(token, { type: "bearer" })
+      .expect({
+        id: test_user.id,
+        username: test_user.username,
+        pfp: test_user.pfp,
+        about: test_user.about,
+      })
+      .expect(200, done);
+  });
+});
+
+describe("Update user info", () => {
+  it("Returns 401 if user is not logged in", (done) => {
+    request(app)
+      .put("/")
+      .attach("pfp", "")
+      .field("about", "Lorem Ipsum dolor")
+      .expect(401, done);
+  });
+
+  it("Sends 400 if about exceeds 200 characters", (done) => {
+    const aboutStr = "x".repeat(201);
+    request(app)
+      .put("/")
+      .auth(token, { type: "bearer" })
+      .attach("pfp", "")
+      .field("about", aboutStr)
+      .expect(400, done);
+  });
+
+  it("Should update user's about field'", (done) => {
+    const aboutStr = "Lorem Ipsum dolor";
+    const buffer = Buffer.alloc(1024 * 1024, "image.png");
+    request(app)
+      .put("/")
+      .auth(token, { type: "bearer" })
+      .attach("pfp", buffer)
+      .field("about", aboutStr)
+      .then(() => {
+        request(app)
+          .get(`/${test_user.id}`)
+          .auth(token, { type: "bearer" })
+          .expect(
+            {
+              about: aboutStr,
+              id: test_user.id,
+              username: test_user.username,
+              pfp: test_user.pfp,
+            },
+            done
+          );
+      });
   });
 });
