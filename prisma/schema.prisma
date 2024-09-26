@@ -22,7 +22,8 @@ model Users {
   about String @db.VarChar(200) @default("")
   pfp String @default("")
   pfp_id String @default("")
-  boards Boards[] @relation("UserBoards")
+  boards_created Boards[] @relation("BoardCreator")
+  boards_joined Boards[] @relation("BoardMember")
   posts Posts[] @relation("WrittenPosts")
   friend_id Friends[] @relation("Friends")
   friends Friends[] @relation("FriendList")
@@ -36,9 +37,9 @@ model Boards {
   img_id String @default("")
   can_invite Boolean @default(true)
   creator_id Int
-  creator Users @relation("UserBoards", fields: [creator_id], references: [id], onDelete: Cascade)
+  creator Users @relation("BoardCreator", fields: [creator_id], references: [id], onDelete: Cascade)
   posts Posts[] @relation("BoardPosts")
-  members Members[] @relation("BoardMembers")
+  members Users[] @relation("BoardMember")
 }
 
 model Posts {
@@ -51,14 +52,6 @@ model Posts {
   board Boards @relation("BoardPosts", fields: [board_id], references: [id], onDelete: Cascade)
   is_edited Boolean @default(false)
   type post_type @default(text)
-}
-
-model Members {
-  board_id Int
-  board Boards @relation("BoardMembers", fields: [board_id], references: [id], onDelete: Cascade)
-  user_id Int
-  date_joined DateTime @default(now())
-  @@id([board_id, user_id])
 }
 
 model Friends {
