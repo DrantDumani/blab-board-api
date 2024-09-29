@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["omitApi"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id Int @id @default(autoincrement())
+  username String @db.VarChar(20) @unique
+  email String @db.VarChar(320) @unique
+  pw String
+  about String @db.VarChar(200) @default("")
+  pfp String @default("")
+  pfp_id String @default("")
+  boards_created Boards[] @relation("BoardCreator")
+  boards_joined Boards[] @relation("BoardMember")
+  posts Posts[] @relation("WrittenPosts")
+  friend_id Friends[] @relation("Friends")
+  friends Friends[] @relation("FriendList")
+}
+
+model Boards {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(20)
+  type board_type @default(public)
+  imgurl String @default("")
+  img_id String @default("")
+  can_invite Boolean @default(true)
+  creator_id Int
+  creator Users @relation("BoardCreator", fields: [creator_id], references: [id], onDelete: Cascade)
+  posts Posts[] @relation("BoardPosts")
+  members Users[] @relation("BoardMember")
+}
+
+model Posts {
+  id Int @id @default(autoincrement())
+  author_id Int
+  author Users @relation("WrittenPosts", fields: [author_id], references: [id], onDelete: Cascade)
+  text String @db.VarChar(500)
+  timestamp DateTime @default(now())
+  board_id Int
+  board Boards @relation("BoardPosts", fields: [board_id], references: [id], onDelete: Cascade)
+  is_edited Boolean @default(false)
+  type post_type @default(text)
+}
+
+model Friends {
+  user_id Int
+  user Users @relation("Friends", fields: [user_id], references: [id], onDelete: Cascade)
+  friend_id Int
+  friend Users @relation("FriendList", fields: [friend_id], references: [id], onDelete: Cascade)
+  status f_status @default(pending)
+  @@id([user_id, friend_id])
+}
+
+enum board_type {
+  public
+  private
+}
+
+enum post_type {
+  text
+  image
+}
+
+enum f_status {
+  pending
+  accepted
+}
