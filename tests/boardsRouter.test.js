@@ -73,9 +73,15 @@ describe("Board route", () => {
       .auth(token, { type: "bearer" })
       .attach("boardImg", buffer)
       .field("name", boardName)
-      .end(async (err, res) => {
+      .end((err, res) => {
         if (err) return done(err);
-        // await client
+        const newBoard = client.boards.findFirst({
+          where: {
+            name: "three",
+          },
+        });
+        expect(newBoard).not.toBeNull();
+        return done();
       });
   });
 });

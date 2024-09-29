@@ -2,7 +2,7 @@ const client = require("../prisma/client");
 const bcrypt = require("bcrypt");
 
 // initialize test database with info
-beforeAll(async () => {
+module.exports = async () => {
   const [user, userTwo] = await Promise.all([
     client.users.create({
       data: {
@@ -40,10 +40,10 @@ beforeAll(async () => {
       },
     }),
   ]);
-});
+};
 
-// clean test database
-afterAll(async () => {
-  await client.boards.deleteMany({});
-  await client.users.deleteMany({});
-});
+// // clean test database
+// afterAll(async () => {
+//   await client.boards.deleteMany({});
+//   await client.users.deleteMany({});
+// });

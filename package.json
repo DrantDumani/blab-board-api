@@ -9,9 +9,8 @@
     "dev": "NODE_ENV=development && node --watch app.js"
   },
   "jest": {
-    "setupFilesAfterEnv": [
-      "./tests/setup.js"
-    ]
+    "globalSetup": "./tests/setup.js",
+    "globalTeardown": "./tests/teardown.js"
   },
   "keywords": [],
   "author": "",
