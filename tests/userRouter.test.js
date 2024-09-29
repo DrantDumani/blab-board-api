@@ -2,7 +2,7 @@ const user = require("../routers/userRouter");
 const request = require("supertest");
 const express = require("express");
 const client = require("../prisma/client");
-const bcrypt = require("bcrypt");
+const jwt = require("../utils/jwt");
 
 const app = express();
 
@@ -14,27 +14,10 @@ let test_user = null;
 let token = "";
 
 beforeAll(async () => {
-  const user = await client.users.create({
-    data: {
-      username: "foo",
-      email: "bar@baz.com",
-      pw: await bcrypt.hash("password", 10),
-    },
+  test_user = await client.users.findUnique({
+    where: { email: "bar@baz.com" },
   });
-  test_user = user;
-
-  request(app)
-    .post("/auth")
-    .type("form")
-    .send({ email: "bar@baz.com", pw: "password" })
-    .end((err, res) => {
-      if (err) return done(err);
-      token = res.body.token;
-    });
-});
-
-afterAll(async () => {
-  await client.users.deleteMany({});
+  token = jwt.sign_jwt(test_user);
 });
 
 describe("Sign Up route", () => {
@@ -123,7 +106,7 @@ describe("Sign Up route", () => {
       .post("/")
       .type("form")
       .send({
-        username: "bar",
+        username: "baz",
         email: "a@b.com",
         pw: "password",
         confirmPw: "password",

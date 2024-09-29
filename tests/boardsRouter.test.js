@@ -2,7 +2,6 @@ const board = require("../routers/boardsRouter");
 const request = require("supertest");
 const express = require("express");
 const client = require("../prisma/client");
-const bcrypt = require("bcrypt");
 const jwt = require("../utils/jwt");
 
 const app = express();
@@ -11,62 +10,35 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use("/", board);
 
+jest.mock("cloudinary", () => () => ({
+  uploader: {
+    upload: (imgPath) => ({ url: imgPath, public_id: "cloudinary_p_id" }),
+  },
+}));
+
 let test_user = null;
 let token = "";
 let boardA = null;
 let boardB = null;
 
 beforeAll(async () => {
-  const user = await client.users.create({
-    data: {
-      username: "foo",
+  test_user = await client.users.findUnique({
+    where: {
       email: "bar@baz.com",
-      pw: await bcrypt.hash("password", 10),
     },
   });
 
-  const userTwo = await client.users.create({
-    data: {
-      username: "bar",
-      email: "foo@bar.com",
-      pw: await bcrypt.hash("password", 10),
+  token = jwt.sign_jwt(test_user);
+  boardA = await client.boards.findFirst({
+    where: {
+      name: "one",
     },
   });
-
-  test_user = user;
-
-  const [boardOne, boardTwo] = await Promise.all([
-    client.boards.create({
-      data: {
-        name: "one",
-        creator_id: user.id,
-        members: {
-          connect: user,
-        },
-      },
-    }),
-    client.boards.create({
-      data: {
-        name: "two",
-        creator_id: userTwo.id,
-        members: {
-          connect: userTwo,
-        },
-      },
-    }),
-  ]);
-  boardA = boardOne;
-  boardB = boardTwo;
-
-  test_user = user;
-  token = jwt.sign_jwt(user);
-});
-
-afterAll(async () => {
-  await Promise.all([
-    client.users.deleteMany({}),
-    client.boards.deleteMany({}),
-  ]);
+  boardB = await client.boards.findFirst({
+    where: {
+      name: "two",
+    },
+  });
 });
 
 describe("Board route", () => {
@@ -91,5 +63,19 @@ describe("Board route", () => {
         [{ id: boardA.id, name: boardA.name, imgurl: boardA.imgurl }],
         done
       );
+  });
+
+  it("Creates a new board using userData", (done) => {
+    const buffer = Buffer.alloc(1024 * 1024, "image.png");
+    const boardName = "three";
+    request(app)
+      .post("/")
+      .auth(token, { type: "bearer" })
+      .attach("boardImg", buffer)
+      .field("name", boardName)
+      .end(async (err, res) => {
+        if (err) return done(err);
+        // await client
+      });
   });
 });
