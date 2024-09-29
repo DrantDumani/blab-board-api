@@ -41,9 +41,3 @@ module.exports = async () => {
     }),
   ]);
 };
-
-// // clean test database
-// afterAll(async () => {
-//   await client.boards.deleteMany({});
-//   await client.users.deleteMany({});
-// });

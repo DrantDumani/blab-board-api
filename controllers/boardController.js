@@ -1,4 +1,5 @@
 const client = require("../prisma/client");
+const cloudinary = require("../utils/cloudinary");
 
 exports.getAllBoards = async (req, res, next) => {
   try {
@@ -46,6 +47,39 @@ exports.getUserBoards = async (req, res, next) => {
       },
     });
     return res.json(userBoards);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.createBoard = async (req, res, next) => {
+  try {
+    const boardInfo = {
+      name: req.body.name,
+    };
+
+    if (req.file) {
+      const uploadedImg = await cloudinary.uploader.upload(req.file.buffer);
+      const { public_id } = uploadedImg;
+      const transformUrl = cloudinary.url(public_id, {
+        width: 128,
+        height: 128,
+      });
+      boardInfo.imgurl = transformUrl;
+      boardInfo.img_id = public_id;
+    }
+    const newBoard = await client.boards.create({
+      data: {
+        ...boardInfo,
+        creator_id: req.user.id,
+        members: {
+          connect: {
+            id: req.user.id,
+          },
+        },
+      },
+    });
+    return res.json({ newBoard_id: newBoard.id });
   } catch (err) {
     return next(err);
   }

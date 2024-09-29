@@ -10,10 +10,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use("/", board);
 
-jest.mock("cloudinary", () => () => ({
+jest.mock("../utils/cloudinary", () => ({
   uploader: {
-    upload: (imgPath) => ({ url: imgPath, public_id: "cloudinary_p_id" }),
+    upload: (imgPath) => ({ public_id: "cloudinary_p_id" }),
   },
+  url: (id) => "boardImg",
 }));
 
 let test_user = null;
@@ -66,21 +67,22 @@ describe("Board route", () => {
   });
 
   it("Creates a new board using userData", (done) => {
-    const buffer = Buffer.alloc(1024 * 1024, "image.png");
     const boardName = "three";
     request(app)
       .post("/")
       .auth(token, { type: "bearer" })
-      .attach("boardImg", buffer)
+      .attach("boardImg", "./public/images/notFound.png")
       .field("name", boardName)
-      .end((err, res) => {
+      .end(async (err, res) => {
         if (err) return done(err);
-        const newBoard = client.boards.findFirst({
+        const newBoard = await client.boards.findFirst({
           where: {
             name: "three",
           },
         });
-        expect(newBoard).not.toBeNull();
+        expect(newBoard).toHaveProperty("name", "three");
+        expect(newBoard).toHaveProperty("imgurl", "boardImg");
+        expect(newBoard).toHaveProperty("img_id", "cloudinary_p_id");
         return done();
       });
   });
