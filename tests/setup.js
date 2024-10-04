@@ -25,6 +25,7 @@ module.exports = async () => {
       data: {
         name: "one",
         creator_id: user.id,
+        created_at: new Date(200000000000),
         members: {
           connect: user,
         },
@@ -34,6 +35,7 @@ module.exports = async () => {
       data: {
         name: "two",
         creator_id: userTwo.id,
+        created_at: new Date(300000000000),
         members: {
           connect: userTwo,
         },

@@ -18,7 +18,7 @@ exports.getAllBoards = async (req, res, next) => {
         },
       },
       orderBy: {
-        name: "asc",
+        created_at: "desc",
       },
     });
     return res.json(boards);
@@ -59,7 +59,9 @@ exports.createBoard = async (req, res, next) => {
     };
 
     if (req.file) {
-      const uploadedImg = await cloudinary.uploader.upload(req.file.buffer);
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      const uploadedImg = await cloudinary.uploader.upload(dataURI);
       const { public_id } = uploadedImg;
       const transformUrl = cloudinary.url(public_id, {
         width: 128,

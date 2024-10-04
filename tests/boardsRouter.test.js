@@ -43,14 +43,18 @@ beforeAll(async () => {
 });
 
 describe("Board route", () => {
-  it("Returns all boards sorted by name", (done) => {
+  it("Returns all boards sorted by date descending", (done) => {
     request(app)
       .get("/")
       .auth(token, { type: "bearer" })
       .expect(
         [
-          { ...boardA, members: [{ id: test_user.id }] },
-          { ...boardB, members: [] },
+          // test fails without the json conversion because the date won't be a string
+          { ...JSON.parse(JSON.stringify(boardB)), members: [] },
+          {
+            ...JSON.parse(JSON.stringify(boardA)),
+            members: [{ id: test_user.id }],
+          },
         ],
         done
       );

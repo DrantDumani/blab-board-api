@@ -35,7 +35,7 @@ model Boards {
   type board_type @default(public)
   imgurl String @default("")
   img_id String @default("")
-  can_invite Boolean @default(true)
+  created_at DateTime @default(now())
   creator_id Int
   creator Users @relation("BoardCreator", fields: [creator_id], references: [id], onDelete: Cascade)
   posts Posts[] @relation("BoardPosts")
