@@ -41,5 +41,15 @@ module.exports = async () => {
         },
       },
     }),
+    client.boards.create({
+      data: {
+        name: "three",
+        creator_id: user.id,
+        created_at: new Date(400000000000),
+        members: {
+          connect: [user, userTwo],
+        },
+      },
+    }),
   ]);
 };

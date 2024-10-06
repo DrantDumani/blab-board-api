@@ -59,14 +59,7 @@ exports.createBoard = async (req, res, next) => {
     };
 
     if (req.file) {
-      const b64 = Buffer.from(req.file.buffer).toString("base64");
-      const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
-      const uploadedImg = await cloudinary.uploader.upload(dataURI);
-      const { public_id } = uploadedImg;
-      const transformUrl = cloudinary.url(public_id, {
-        width: 128,
-        height: 128,
-      });
+      const { transformUrl, public_id } = await cloudinary.handleUpload();
       boardInfo.imgurl = transformUrl;
       boardInfo.img_id = public_id;
     }
@@ -83,6 +76,60 @@ exports.createBoard = async (req, res, next) => {
     });
     return res.json({ newBoard_id: newBoard.id });
   } catch (err) {
+    return next(err);
+  }
+};
+
+exports.getBoardInfo = async (req, res, next) => {
+  try {
+    const board = await client.boards.findUnique({
+      where: {
+        id: Number(req.params.boardId),
+      },
+      omit: {
+        type: true,
+        created_at: true,
+      },
+      include: {
+        posts: true,
+        members: {
+          select: {
+            id: true,
+            username: true,
+            pfp: true,
+          },
+          orderBy: {
+            username: "asc",
+          },
+        },
+      },
+    });
+    return res.json(board);
+  } catch (err) {
+    res.status(404).json({ msg: "Board not found" });
+    return next(err);
+  }
+};
+
+exports.newBoardMember = async (req, res, next) => {
+  try {
+    const board_joined = await client.boards.update({
+      where: {
+        id: Number(req.params.boardId),
+      },
+      data: {
+        members: {
+          connect: {
+            id: req.user.id,
+          },
+        },
+      },
+    });
+    return res.json({ board_id: board_joined.id });
+  } catch (err) {
+    // May fail because the board has been deleted, or does not exist.
+    // Will also catch errors where users make up invalid board ids
+    res.status(404).json({ msg: "Could not find board" });
     return next(err);
   }
 };

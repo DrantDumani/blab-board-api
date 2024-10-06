@@ -1,7 +1,8 @@
 const client = require("../prisma/client");
 const bcrypt = require("bcrypt");
 const jwt = require("../utils/jwt");
-const passport = require("../passport/passportConfig");
+// const passport = require("../passport/passportConfig");
+const cloudinary = require("../utils/cloudinary");
 
 exports.signUp = async (req, res, next) => {
   try {
@@ -63,13 +64,21 @@ exports.getUserInfo = async (req, res, next) => {
 
 exports.updateUser = async (req, res, next) => {
   try {
+    const userInfo = {
+      about: req.body.about,
+    };
+
+    if (req.file) {
+      const { transformUrl, public_id } = await cloudinary.handleUpload();
+      userInfo.pfp = transformUrl;
+      userInfo.pfp_id = public_id;
+    }
+
     const updatedUser = await client.users.update({
       where: {
         id: Number(req.user.id),
       },
-      data: {
-        about: req.body.about,
-      },
+      data: userInfo,
       select: {
         id: true,
         username: true,

@@ -4,4 +4,5 @@ const client = require("../prisma/client");
 module.exports = async () => {
   await client.boards.deleteMany({});
   await client.users.deleteMany({});
+  await client.posts.deleteMany({});
 };

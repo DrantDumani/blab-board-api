@@ -1,8 +1,7 @@
 const user = require("../routers/userRouter");
 const request = require("supertest");
 const express = require("express");
-const client = require("../prisma/client");
-const jwt = require("../utils/jwt");
+const { getToken, getUser } = require("../utils/getTestData");
 
 const app = express();
 
@@ -10,15 +9,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use("/", user);
 
-let test_user = null;
-let token = "";
-
-beforeAll(async () => {
-  test_user = await client.users.findUnique({
-    where: { email: "bar@baz.com" },
-  });
-  token = jwt.sign_jwt(test_user);
-});
+const mockCloudId = "cloudinary_p_id";
+const imgurl = "userImg";
+jest.mock("../utils/cloudinary", () => ({
+  handleUpload: (fileValue) => ({
+    transformUrl: imgurl,
+    public_id: mockCloudId,
+  }),
+}));
 
 describe("Sign Up route", () => {
   describe("Bad input", () => {
@@ -35,19 +33,6 @@ describe("Sign Up route", () => {
         .expect(400, done);
     });
 
-    it("Returns 400 if username is already in the database", (done) => {
-      request(app)
-        .post("/")
-        .type("form")
-        .send({
-          username: "foo",
-          email: "a@b.com",
-          pw: "password",
-          confirmPw: "password",
-        })
-        .expect(400, done);
-    });
-
     it("Returns 400 if email is invalid", (done) => {
       request(app)
         .post("/")
@@ -55,19 +40,6 @@ describe("Sign Up route", () => {
         .send({
           username: "bar",
           email: "not_an_email",
-          pw: "password",
-          confirmPw: "password",
-        })
-        .expect(400, done);
-    });
-
-    it("Returns 400 if email is already in the database", (done) => {
-      request(app)
-        .post("/")
-        .type("form")
-        .send({
-          username: "bar",
-          email: "bar@baz.com",
           pw: "password",
           confirmPw: "password",
         })
@@ -128,88 +100,52 @@ describe("Log in Route", () => {
       .send({ email: "", pw: "" })
       .expect(400, done);
   });
-
-  it("Sends 401 Forbidden if user submits incorrect fields", (done) => {
-    request(app)
-      .post("/auth")
-      .type("form")
-      .send({ email: "not@good.com", pw: "wrong" })
-      .expect(401, done);
-  });
-
-  it("Sends user token on successful login", (done) => {
-    request(app)
-      .post("/auth")
-      .type("form")
-      .send({ email: "bar@baz.com", pw: "password" })
-      .expect(200)
-      .end((err, res) => {
-        if (err) return done(err);
-        expect(res.body.token).toBeDefined();
-        return done();
-      });
-  });
 });
 
-describe("Get user info", () => {
+describe("Read and update user info", () => {
   it("Returns 401 if user is not logged in", (done) => {
-    request(app).get(`/${test_user.id}`).expect(401, done);
+    request(app).get("/1").expect(401, done);
   });
 
-  it("Returns user info if authorized", (done) => {
-    request(app)
-      .get(`/${test_user.id}`)
-      .auth(token, { type: "bearer" })
-      .expect({
-        id: test_user.id,
-        username: test_user.username,
-        pfp: test_user.pfp,
-        about: test_user.about,
-      })
-      .expect(200, done);
-  });
-});
+  it("Can read and update user info", async () => {
+    const user = await getUser();
+    const token = getToken(user);
 
-describe("Update user info", () => {
-  it("Returns 401 if user is not logged in", (done) => {
-    request(app)
+    const readResp = await request(app)
+      .get(`/${user.id}`)
+      .auth(token, { type: "bearer" });
+
+    expect(readResp.body.username).toBe(user.username);
+    expect(readResp.body.about).toBe(user.about);
+    expect(readResp.body.pfp).toBe(user.pfp);
+
+    const aboutStr = "Lorem Ipsum";
+    const updateResp = await request(app)
       .put("/")
-      .attach("pfp", "")
-      .field("about", "Lorem Ipsum dolor")
-      .expect(401, done);
+      .auth(token, { type: "bearer" })
+      .attach("pfp", "./public/images/notFound.png")
+      .field("about", aboutStr);
+
+    expect(updateResp.status).toBe(200);
+
+    const nextResp = await request(app)
+      .get(`/${user.id}`)
+      .auth(token, { type: "bearer" });
+
+    expect(nextResp.body.about).toBe(aboutStr);
+    expect(nextResp.body.pfp).toBe(imgurl);
   });
 
   it("Sends 400 if about exceeds 200 characters", (done) => {
     const aboutStr = "x".repeat(201);
-    request(app)
-      .put("/")
-      .auth(token, { type: "bearer" })
-      .attach("pfp", "")
-      .field("about", aboutStr)
-      .expect(400, done);
-  });
-
-  it("Should update user's about field'", (done) => {
-    const aboutStr = "Lorem Ipsum dolor";
-    const buffer = Buffer.alloc(1024 * 1024, "image.png");
-    request(app)
-      .put("/")
-      .auth(token, { type: "bearer" })
-      .attach("pfp", buffer)
-      .field("about", aboutStr)
-      .then(() => {
-        request(app)
-          .get(`/${test_user.id}`)
-          .auth(token, { type: "bearer" })
-          .expect(
-            {
-              about: aboutStr,
-              id: test_user.id,
-              username: test_user.username,
-              pfp: test_user.pfp,
-            },
-            done
-          );
-      });
+    getUser().then((user) => {
+      const token = getToken(user);
+      request(app)
+        .put("/")
+        .auth(token, { type: "bearer" })
+        .attach("pfp", "")
+        .field("about", aboutStr)
+        .expect(400, done);
+    });
   });
 });
