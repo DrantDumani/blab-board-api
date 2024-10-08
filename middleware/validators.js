@@ -48,6 +48,15 @@ exports.boardValidationRules = () => {
   ];
 };
 
+exports.postValidationRules = () => {
+  return [
+    body("text", "Post must be between 1 and 500 characters")
+      .isString()
+      .trim()
+      .isLength({ min: 1, max: 200 }),
+  ];
+};
+
 exports.validateFields = (req, res, next) => {
   const errors = validationResult(req);
   if (errors.isEmpty()) return next();
