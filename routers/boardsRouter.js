@@ -20,7 +20,4 @@ router.get("/isMember", boardController.getUserBoards);
 
 router.get("/:boardId", boardController.getBoardInfo);
 
-// place this in the members router instead
-// router.post("/:boardId/members", boardController.newBoardMember);
-
 module.exports = router;
