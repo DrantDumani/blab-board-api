@@ -52,6 +52,7 @@ model Posts {
   board Boards @relation("BoardPosts", fields: [board_id], references: [id], onDelete: Cascade)
   is_edited Boolean @default(false)
   type post_type @default(text)
+  c_public_id String @default("")
 }
 
 model Friends {
