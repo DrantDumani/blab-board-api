@@ -59,7 +59,9 @@ exports.createBoard = async (req, res, next) => {
     };
 
     if (req.file) {
-      const { transformUrl, public_id } = await cloudinary.handleUpload();
+      const { transformUrl, public_id } = await cloudinary.handleUpload(
+        req.file
+      );
       boardInfo.imgurl = transformUrl;
       boardInfo.img_id = public_id;
     }
@@ -86,12 +88,26 @@ exports.getBoardInfo = async (req, res, next) => {
       where: {
         id: Number(req.params.boardId),
       },
-      omit: {
-        type: true,
-        created_at: true,
-      },
+      // omit: {
+      //   type: true,
+      //   created_at: true,
+      // },
       include: {
-        posts: true,
+        posts: {
+          include: {
+            author: {
+              select: {
+                pfp: true,
+                username: true,
+              },
+            },
+          },
+        },
+        creator: {
+          select: {
+            id: true,
+          },
+        },
         members: {
           select: {
             id: true,

@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const userRouter = require("./routers/userRouter");
 const boardRouter = require("./routers/boardsRouter");
+const memberRouter = require("./routers/membersRouter");
 
 const port = process.env.PORT;
 
@@ -21,6 +22,7 @@ app.use(
 app.use(express.static("public"));
 app.use("/users", userRouter);
 app.use("/boards", boardRouter);
+app.use("/members", memberRouter);
 
 app.use((err, req, res, next) => {
   if (req.app.get("env") === "development") console.error(err);
