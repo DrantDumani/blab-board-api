@@ -14,6 +14,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use("/", postRouter);
 
+const io = {
+  to: () => ({ emit: () => {} }),
+};
+app.set("socketio", io);
+
 const mockCloudId = "cloudinary_p_id";
 const imgurl = "boardImg";
 jest.mock("../utils/cloudinary", () => ({

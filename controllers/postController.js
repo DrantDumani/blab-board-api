@@ -28,6 +28,12 @@ exports.newPost = async (req, res, next) => {
         board_id: Number(req.params.boardId),
       },
     });
+    const post_author_obj = {
+      post: newPost,
+      author: { username: req.user.username, pfp: req.user.pfp },
+    };
+    const io = req.app.get("socketio");
+    io.to(req.params.boardId).emit("boardMsg", post_author_obj);
 
     return res.json({ postId: newPost.id });
   } catch (err) {
