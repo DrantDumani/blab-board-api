@@ -33,7 +33,7 @@ exports.newPost = async (req, res, next) => {
       author: { username: req.user.username, pfp: req.user.pfp },
     };
     const io = req.app.get("socketio");
-    io.to(req.params.boardId).emit("boardMsg", post_author_obj);
+    io.to(req.params.boardId).emit("boardMsg", post_author_obj, "create");
 
     return res.json({ postId: newPost.id });
   } catch (err) {
@@ -54,6 +54,16 @@ exports.editPost = async (req, res, next) => {
         is_edited: true,
       },
     });
+    const post_author_obj = {
+      post: updatedPost,
+      author: { username: req.user.username, pfp: req.user.pfp },
+    };
+    const io = req.app.get("socketio");
+    io.to(updatedPost.board_id.toString()).emit(
+      "boardMsg",
+      post_author_obj,
+      "edit"
+    );
     return res.json(updatedPost);
   } catch (err) {
     if (err.code === "P2025") {
@@ -71,6 +81,11 @@ exports.deletePost = async (req, res, next) => {
         id: Number(req.params.postId),
       },
     });
+
+    const postObj = { post: deletedPost, author: {} };
+
+    const io = req.app.get("socketio");
+    io.to(deletedPost.board_id.toString()).emit("boardMsg", postObj, "delete");
 
     res.json(deletedPost);
     if (deletedPost.type === "image") {
@@ -97,6 +112,13 @@ exports.newImagePost = async (req, res, next) => {
           c_public_id: public_id,
         },
       });
+
+      const post_author_obj = {
+        post: newImgPost,
+        author: { username: req.user.username, pfp: req.user.pfp },
+      };
+      const io = req.app.get("socketio");
+      io.to(req.params.boardId).emit("boardMsg", post_author_obj, "create");
       return res.json(newImgPost);
     }
   } catch (err) {

@@ -88,10 +88,6 @@ exports.getBoardInfo = async (req, res, next) => {
       where: {
         id: Number(req.params.boardId),
       },
-      // omit: {
-      //   type: true,
-      //   created_at: true,
-      // },
       include: {
         posts: {
           include: {
@@ -101,6 +97,9 @@ exports.getBoardInfo = async (req, res, next) => {
                 username: true,
               },
             },
+          },
+          orderBy: {
+            timestamp: "asc",
           },
         },
         creator: {
