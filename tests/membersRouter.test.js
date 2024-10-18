@@ -40,3 +40,18 @@ describe("Joining boards", () => {
     expect(response.status).toBe(403);
   });
 });
+
+describe("Leaving Boards", () => {
+  it("Can leave public boards", async () => {
+    const user = await getUser();
+    const token = getToken(user);
+    const { boardB } = await getBoardData();
+
+    const response = await request(app)
+      .delete(`/${boardB.id}`)
+      .auth(token, { type: "bearer" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.board_id).toBe(boardB.id);
+  });
+});

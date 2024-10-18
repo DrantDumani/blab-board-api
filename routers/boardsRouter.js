@@ -20,4 +20,14 @@ router.get("/isMember", boardController.getUserBoards);
 
 router.get("/:boardId", boardController.getBoardInfo);
 
+router.put(
+  "/:boardId",
+  upload.single("boardImg"),
+  validators.boardValidationRules(),
+  validators.validateFields,
+  boardController.editBoard
+);
+
+router.delete("/:boardId", boardController.deleteBoard);
+
 module.exports = router;

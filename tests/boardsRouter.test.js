@@ -80,4 +80,51 @@ describe("Board route", () => {
     expect(response.body.members.length).toBeDefined();
     expect(response.body.name).toBe(boardA.name);
   });
+
+  describe("Integration tests", () => {
+    it("Can create, edit, and delete boards", async () => {
+      const user = await getUser();
+      const token = getToken(user);
+
+      const createResp = await request(app)
+        .post("/")
+        .auth(token, { type: "bearer" })
+        .field("name", "testBoard");
+
+      // expect a board with createResp's id to have the name "testBoard"
+      const board_id = createResp.body.newBoard_id;
+      expect(board_id).toBeDefined();
+
+      const getBoard = await request(app)
+        .get(`/${board_id}`)
+        .auth(token, { type: "bearer" });
+
+      expect(getBoard.body.name).toBe("testBoard");
+
+      // edit the board
+      await request(app)
+        .put(`/${board_id}`)
+        .auth(token, { type: "bearer" })
+        .field("name", "New Name");
+
+      const getEditedBoard = await request(app)
+        .get(`/${board_id}`)
+        .auth(token, { type: "bearer" });
+
+      expect(getEditedBoard.body.name).toBe("New Name");
+
+      // delete the board
+      const deleteResp = await request(app)
+        .delete(`/${board_id}`)
+        .auth(token, { type: "bearer" });
+      expect(deleteResp.status).toBe(200);
+      expect(deleteResp.body.deleted_id).toBe(board_id);
+
+      const lastResponse = await request(app)
+        .get(`/${board_id}`)
+        .auth(token, { type: "bearer" });
+
+      expect(lastResponse.status).toBe(404);
+    });
+  });
 });
