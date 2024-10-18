@@ -69,7 +69,9 @@ exports.updateUser = async (req, res, next) => {
     };
 
     if (req.file) {
-      const { transformUrl, public_id } = await cloudinary.handleUpload();
+      const { transformUrl, public_id } = await cloudinary.handleUpload(
+        req.file
+      );
       userInfo.pfp = transformUrl;
       userInfo.pfp_id = public_id;
     }
@@ -84,10 +86,12 @@ exports.updateUser = async (req, res, next) => {
         username: true,
         about: true,
         pfp: true,
+        pfp_id: true,
       },
     });
 
-    return res.json(updatedUser);
+    const token = jwt.sign_jwt(updatedUser);
+    return res.json({ token: token });
   } catch (err) {
     console.log(err);
     if (err.code === "P2025") {
