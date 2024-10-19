@@ -36,6 +36,7 @@ exports.getUserBoards = async (req, res, next) => {
             id: req.user.id,
           },
         },
+        type: "public",
       },
       select: {
         id: true,

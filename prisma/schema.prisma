@@ -40,6 +40,7 @@ model Boards {
   creator Users @relation("BoardCreator", fields: [creator_id], references: [id], onDelete: Cascade)
   posts Posts[] @relation("BoardPosts")
   members Users[] @relation("BoardMember")
+  dm Friends[] @relation("DM")
 }
 
 model Posts {
@@ -61,6 +62,8 @@ model Friends {
   friend_id Int
   friend Users @relation("FriendList", fields: [friend_id], references: [id], onDelete: Cascade)
   status f_status @default(pending)
+  board_id Int?
+  board Boards? @relation("DM", fields: [board_id], references: [id], onDelete: Cascade)
   @@id([user_id, friend_id])
 }
 
