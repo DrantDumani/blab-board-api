@@ -8,13 +8,16 @@ cloudinary.config({
 
 exports.cloudapi = cloudinary;
 
-exports.handleUpload = async (file, publicId = "") => {
+exports.handleUpload = async (file, publicId = "", folderName = "") => {
   const b64 = Buffer.from(file.buffer).toString("base64");
   const dataURI = "data:" + file.mimetype + ";base64," + b64;
   const options = {};
   if (publicId) {
     options.public_id = publicId;
     options.invalidate = true;
+  }
+  if (folderName) {
+    options.folder = folderName;
   }
   const uploadedImg = await cloudinary.uploader.upload(dataURI, options);
   const { public_id, url } = uploadedImg;

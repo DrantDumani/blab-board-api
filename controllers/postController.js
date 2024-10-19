@@ -102,7 +102,11 @@ exports.deletePost = async (req, res, next) => {
 exports.newImagePost = async (req, res, next) => {
   try {
     if (req.file) {
-      const { url, public_id } = await cloudinary.handleUpload(req.file);
+      const { url, public_id } = await cloudinary.handleUpload(
+        req.file,
+        "",
+        req.params.boardId
+      );
       const newImgPost = await client.posts.create({
         data: {
           author_id: req.user.id,

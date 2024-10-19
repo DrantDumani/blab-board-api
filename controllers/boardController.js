@@ -201,6 +201,12 @@ exports.deleteBoard = async (req, res, next) => {
     if (deletedBoard.img_id) {
       await cloudinary.cloudapi.uploader.destroy(deletedPost.img_id);
     }
+    // delete all images posted to the board from cloudinary
+    if (deletedBoard) {
+      await cloudinary.cloudapi.api.delete_resources_by_prefix(
+        `${req.params.boardId}/`
+      );
+    }
 
     return res.json({ deleted_id: deletedBoard.id });
   } catch (err) {
