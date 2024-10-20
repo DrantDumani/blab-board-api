@@ -43,11 +43,21 @@ app.set("socketio", io);
 
 // when someone connects, have them join a room
 io.on("connection", (socket) => {
-  socket.on("joinRoom", (roomId) => {
+  socket.on("joinRoom", async ({ roomId, userId }) => {
     socket.join(roomId);
-    console.log("Client connected to room: " + roomId);
+    socket.data.userId = userId;
+    const socketsInRoom = await io.in(roomId).fetchSockets();
+    const usersInRoom = socketsInRoom
+      .map((s) => s.data.userId)
+      .reduce((acc, val) => {
+        acc[val] = val;
+        return acc;
+      }, {});
+    io.to(roomId).emit("usersOnline", usersInRoom);
+    console.log("User " + userId + " connected to room: " + roomId);
   });
   socket.on("disconnect", () => {
+    socket.broadcast.emit("userWentOffline", socket.data.userId);
     console.log("Client has disconnected");
   });
 });

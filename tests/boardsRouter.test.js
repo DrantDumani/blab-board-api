@@ -16,6 +16,11 @@ jest.mock("../utils/cloudinary", () => ({
     transformUrl: imgurl,
     public_id: mockCloudId,
   }),
+  cloudapi: {
+    api: {
+      delete_resources_by_prefix: () => {},
+    },
+  },
 }));
 
 describe("Board route", () => {

@@ -15,6 +15,18 @@ exports.joinBoard = async (req, res, next) => {
         },
       },
     });
+
+    const io = req.app.get("socketio");
+    io.to(req.params.boardId).emit(
+      "boardMember",
+      {
+        id: req.user.id,
+        username: req.user.username,
+        pfp: req.user.pfp,
+      },
+      "join"
+    );
+
     return res
       .status(200)
       .json({ msg: "Success", board_id: req.params.boardId });
@@ -39,6 +51,18 @@ exports.leaveBoard = async (req, res, next) => {
         },
       },
     });
+
+    const io = req.app.get("socketio");
+    io.to(req.params.boardId).emit(
+      "boardMember",
+      {
+        id: req.user.id,
+        username: req.user.username,
+        pfp: req.user.pfp,
+      },
+      "leave"
+    );
+
     res.json({ msg: "Left board", board_id: boardToLeave.id });
   } catch (err) {
     return next(err);

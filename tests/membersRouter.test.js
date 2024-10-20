@@ -9,6 +9,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use("/", memberRouter);
 
+const io = {
+  to: () => ({ emit: () => {} }),
+};
+app.set("socketio", io);
+
 describe("Joining boards", () => {
   it("Can join public boards", async () => {
     const user = await getUser();
