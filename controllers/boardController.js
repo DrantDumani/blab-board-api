@@ -137,30 +137,6 @@ exports.getBoardInfo = async (req, res, next) => {
   }
 };
 
-// exports.newBoardMember = async (req, res, next) => {
-//   try {
-//     const board_joined = await client.boards.update({
-//       where: {
-//         id: Number(req.params.boardId),
-//       },
-//       data: {
-//         members: {
-//           connect: {
-//             id: req.user.id,
-//           },
-//         },
-//       },
-//     });
-
-//     return res.json({ board_id: board_joined.id });
-//   } catch (err) {
-//     // May fail because the board has been deleted, or does not exist.
-//     // Will also catch errors where users make up invalid board ids
-//     res.status(404).json({ msg: "Could not find board" });
-//     return next(err);
-//   }
-// };
-
 exports.editBoard = async (req, res, next) => {
   try {
     const updateInfo = {
