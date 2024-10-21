@@ -8,6 +8,7 @@ const userRouter = require("./routers/userRouter");
 const boardRouter = require("./routers/boardsRouter");
 const memberRouter = require("./routers/membersRouter");
 const postRouter = require("./routers/postsRouter");
+const friendRouter = require("./routers/friendsRouter");
 
 const port = process.env.PORT;
 
@@ -26,6 +27,7 @@ app.use("/users", userRouter);
 app.use("/boards", boardRouter);
 app.use("/members", memberRouter);
 app.use("/posts", postRouter);
+app.use("/friends", friendRouter);
 
 app.use((err, req, res, next) => {
   if (req.app.get("env") === "development") console.error(err);

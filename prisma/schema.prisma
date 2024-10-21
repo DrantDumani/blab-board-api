@@ -61,7 +61,7 @@ model Friends {
   user Users @relation("Friends", fields: [user_id], references: [id], onDelete: Cascade)
   friend_id Int
   friend Users @relation("FriendList", fields: [friend_id], references: [id], onDelete: Cascade)
-  status f_status @default(pending)
+  status f_status
   board_id Int?
   board Boards? @relation("DM", fields: [board_id], references: [id], onDelete: Cascade)
   @@id([user_id, friend_id])
@@ -78,6 +78,7 @@ enum post_type {
 }
 
 enum f_status {
-  pending
+  pending_1_2
+  pending_2_1
   accepted
 }

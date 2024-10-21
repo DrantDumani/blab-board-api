@@ -10,4 +10,6 @@ router.post("/:friendId", friendController.sendFriendReq);
 
 router.put("/:userId", friendController.confirmFriendReq);
 
+router.delete("/:friendId", friendController.deleteFriend);
+
 module.exports = router;

@@ -2,6 +2,11 @@ const friend = require("../routers/friendsRouter");
 const request = require("supertest");
 const express = require("express");
 const { getToken, getUser, getTestUser2 } = require("../utils/getTestData");
+const client = require("../prisma/client");
+
+beforeEach(async () => {
+  await client.friends.deleteMany({});
+});
 
 const app = express();
 
@@ -33,21 +38,46 @@ describe("Friend route", () => {
       .auth(token, { type: "bearer" });
 
     expect([user.id, receiver.id]).toContain(response.body.friend_id);
-    expect(response.body.status).toBe("pending");
+    expect(response.body.status).toMatch(/^pending/);
   });
 
   it("Should accept friend request", async () => {
     const user = await getUser();
 
     const receiver = await getTestUser2();
-    const token = getToken(receiver);
+    const userToken = getToken(user);
+    const receiverToken = getToken(receiver);
+
+    await request(app)
+      .post(`/${receiver.id}`)
+      .auth(userToken, { type: "bearer" });
 
     const response = await request(app)
       .put(`/${user.id}`)
-      .auth(token, { type: "bearer" });
+      .auth(receiverToken, { type: "bearer" });
 
     expect([user.id, receiver.id]).toContain(response.body.friend_id);
     expect([user.id, receiver.id]).toContain(response.body.user_id);
     expect(response.body.status).toBe("accepted");
+  });
+
+  it("Should delete friendship or friend request", async () => {
+    const user = await getUser();
+
+    const receiver = await getTestUser2();
+    const userToken = getToken(user);
+    const receiverToken = getToken(receiver);
+
+    await request(app)
+      .post(`/${receiver.id}`)
+      .auth(userToken, { type: "bearer" });
+
+    const response = await request(app)
+      .delete(`/${user.id}`)
+      .auth(receiverToken, { type: "bearer" });
+
+    expect(response.status).toBe(200);
+    expect([user.id, receiver.id]).toContain(response.body.friend_id);
+    expect([user.id, receiver.id]).toContain(response.body.user_id);
   });
 });

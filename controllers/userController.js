@@ -48,6 +48,30 @@ exports.getUserInfo = async (req, res, next) => {
         username: true,
         about: true,
         pfp: true,
+        friends: {
+          where: {
+            OR: [
+              {
+                user_id: req.user.id,
+              },
+              {
+                friend_id: req.user.id,
+              },
+            ],
+          },
+        },
+        friend_id: {
+          where: {
+            OR: [
+              {
+                user_id: req.user.id,
+              },
+              {
+                friend_id: req.user.id,
+              },
+            ],
+          },
+        },
       },
     });
 
