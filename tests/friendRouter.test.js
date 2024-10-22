@@ -24,7 +24,7 @@ describe("Friend route", () => {
       .auth(token, { type: "bearer" });
 
     expect(response.status).toBe(200);
-    expect(response.body.friends).toBeInstanceOf(Array);
+    expect(response.body).toBeInstanceOf(Array);
   });
 
   it("Should send friend request to user", async () => {

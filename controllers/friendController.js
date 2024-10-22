@@ -11,7 +11,7 @@ exports.getAllFriends = async (req, res, next) => {
       SELECT "Users".id, "Users".username, "Users".pfp, "Friends".status, "Friends".board_id FROM
       "Users" JOIN "Friends" ON "Users".id = "Friends".friend_id
       WHERE "Friends".user_id = ${userId}`;
-    return res.json({ friends });
+    return res.json(friends);
   } catch (err) {
     return next(err);
   }
