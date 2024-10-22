@@ -20,11 +20,12 @@ module.exports = async () => {
     }),
   ]);
 
-  await Promise.all([
+  const [_, __, boardC] = await Promise.all([
     client.boards.create({
       data: {
         name: "one",
         creator_id: user.id,
+        created_at: new Date(200000000000),
         members: {
           connect: user,
         },
@@ -34,10 +35,29 @@ module.exports = async () => {
       data: {
         name: "two",
         creator_id: userTwo.id,
+        created_at: new Date(300000000000),
         members: {
           connect: userTwo,
         },
       },
     }),
+    client.boards.create({
+      data: {
+        name: "three",
+        creator_id: user.id,
+        created_at: new Date(400000000000),
+        members: {
+          connect: [user, userTwo],
+        },
+      },
+    }),
   ]);
+
+  await client.posts.create({
+    data: {
+      author_id: user.id,
+      board_id: boardC.id,
+      text: "Play Ghost Trick",
+    },
+  });
 };

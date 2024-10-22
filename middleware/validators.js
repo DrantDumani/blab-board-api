@@ -39,6 +39,24 @@ exports.updateUserValidationRules = () => {
   ];
 };
 
+exports.boardValidationRules = () => {
+  return [
+    body("name", "Name must be between 1 and 20 characters")
+      .isString()
+      .trim()
+      .isLength({ min: 1, max: 200 }),
+  ];
+};
+
+exports.postValidationRules = () => {
+  return [
+    body("text", "Post must be between 1 and 500 characters")
+      .isString()
+      .trim()
+      .isLength({ min: 1, max: 500 }),
+  ];
+};
+
 exports.validateFields = (req, res, next) => {
   const errors = validationResult(req);
   if (errors.isEmpty()) return next();

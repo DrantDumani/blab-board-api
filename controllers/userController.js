@@ -1,7 +1,8 @@
 const client = require("../prisma/client");
 const bcrypt = require("bcrypt");
 const jwt = require("../utils/jwt");
-const passport = require("../passport/passportConfig");
+// const passport = require("../passport/passportConfig");
+const cloudinary = require("../utils/cloudinary");
 
 exports.signUp = async (req, res, next) => {
   try {
@@ -47,6 +48,30 @@ exports.getUserInfo = async (req, res, next) => {
         username: true,
         about: true,
         pfp: true,
+        friends: {
+          where: {
+            OR: [
+              {
+                user_id: req.user.id,
+              },
+              {
+                friend_id: req.user.id,
+              },
+            ],
+          },
+        },
+        friend_id: {
+          where: {
+            OR: [
+              {
+                user_id: req.user.id,
+              },
+              {
+                friend_id: req.user.id,
+              },
+            ],
+          },
+        },
       },
     });
 
@@ -63,22 +88,34 @@ exports.getUserInfo = async (req, res, next) => {
 
 exports.updateUser = async (req, res, next) => {
   try {
+    const userInfo = {
+      about: req.body.about,
+    };
+
+    if (req.file) {
+      const { transformUrl, public_id } = await cloudinary.handleUpload(
+        req.file
+      );
+      userInfo.pfp = transformUrl;
+      userInfo.pfp_id = public_id;
+    }
+
     const updatedUser = await client.users.update({
       where: {
         id: Number(req.user.id),
       },
-      data: {
-        about: req.body.about,
-      },
+      data: userInfo,
       select: {
         id: true,
         username: true,
         about: true,
         pfp: true,
+        pfp_id: true,
       },
     });
 
-    return res.json(updatedUser);
+    const token = jwt.sign_jwt(updatedUser);
+    return res.json({ token: token });
   } catch (err) {
     console.log(err);
     if (err.code === "P2025") {

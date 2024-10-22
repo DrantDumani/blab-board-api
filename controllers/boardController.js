@@ -18,7 +18,7 @@ exports.getAllBoards = async (req, res, next) => {
         },
       },
       orderBy: {
-        name: "asc",
+        created_at: "desc",
       },
     });
     return res.json(boards);
@@ -36,11 +36,20 @@ exports.getUserBoards = async (req, res, next) => {
             id: req.user.id,
           },
         },
+        type: "public",
       },
       select: {
         id: true,
         name: true,
         imgurl: true,
+        members: {
+          where: {
+            id: req.user.id,
+          },
+          select: {
+            id: true,
+          },
+        },
       },
       orderBy: {
         name: "asc",
@@ -59,12 +68,9 @@ exports.createBoard = async (req, res, next) => {
     };
 
     if (req.file) {
-      const uploadedImg = await cloudinary.uploader.upload(req.file.buffer);
-      const { public_id } = uploadedImg;
-      const transformUrl = cloudinary.url(public_id, {
-        width: 128,
-        height: 128,
-      });
+      const { transformUrl, public_id } = await cloudinary.handleUpload(
+        req.file
+      );
       boardInfo.imgurl = transformUrl;
       boardInfo.img_id = public_id;
     }
@@ -81,6 +87,109 @@ exports.createBoard = async (req, res, next) => {
     });
     return res.json({ newBoard_id: newBoard.id });
   } catch (err) {
+    return next(err);
+  }
+};
+
+exports.getBoardInfo = async (req, res, next) => {
+  try {
+    const board = await client.boards.findUnique({
+      where: {
+        id: Number(req.params.boardId),
+      },
+      include: {
+        posts: {
+          include: {
+            author: {
+              select: {
+                pfp: true,
+                username: true,
+              },
+            },
+          },
+          orderBy: {
+            timestamp: "asc",
+          },
+        },
+        creator: {
+          select: {
+            id: true,
+          },
+        },
+        members: {
+          select: {
+            id: true,
+            username: true,
+            pfp: true,
+          },
+          orderBy: {
+            username: "asc",
+          },
+        },
+      },
+    });
+
+    if (!board) throw new Error();
+    return res.json(board);
+  } catch (err) {
+    res.status(404).json({ msg: "Board not found" });
+    return next(err);
+  }
+};
+
+exports.editBoard = async (req, res, next) => {
+  try {
+    const updateInfo = {
+      name: req.body.name,
+    };
+    if (req.file && req.body.img_id) {
+      const { transformUrl } = await cloudinary.handleUpload(
+        req.file,
+        req.body.img_id
+      );
+      updateInfo.imgurl = transformUrl;
+    }
+    const editedBoard = await client.boards.update({
+      where: {
+        id: Number(req.params.boardId),
+        img_id: req.body.img_id,
+      },
+      data: updateInfo,
+    });
+    return res.json({ board_id: editedBoard.id });
+  } catch (err) {
+    // if there was an error, then delete the uploaded image from cloudinary
+    if (req.body.img_id) {
+      await cloudinary.cloudapi.uploader.destroy(req.body.img_id);
+    }
+    return next(err);
+  }
+};
+
+exports.deleteBoard = async (req, res, next) => {
+  try {
+    const deletedBoard = await client.boards.delete({
+      where: {
+        id: Number(req.params.boardId),
+        creator_id: req.user.id,
+      },
+    });
+    // if there's an image_id, delete the image from cloudinary
+    if (deletedBoard.img_id) {
+      await cloudinary.cloudapi.uploader.destroy(deletedPost.img_id);
+    }
+    // delete all images posted to the board from cloudinary
+    if (deletedBoard) {
+      await cloudinary.cloudapi.api.delete_resources_by_prefix(
+        `${req.params.boardId}/`
+      );
+    }
+
+    return res.json({ deleted_id: deletedBoard.id });
+  } catch (err) {
+    if (err.code === "P2025") {
+      return res.status(404).json({ msg: "Board not found" });
+    }
     return next(err);
   }
 };

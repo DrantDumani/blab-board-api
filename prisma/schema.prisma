@@ -35,11 +35,12 @@ model Boards {
   type board_type @default(public)
   imgurl String @default("")
   img_id String @default("")
-  can_invite Boolean @default(true)
+  created_at DateTime @default(now())
   creator_id Int
   creator Users @relation("BoardCreator", fields: [creator_id], references: [id], onDelete: Cascade)
   posts Posts[] @relation("BoardPosts")
   members Users[] @relation("BoardMember")
+  dm Friends[] @relation("DM")
 }
 
 model Posts {
@@ -52,6 +53,7 @@ model Posts {
   board Boards @relation("BoardPosts", fields: [board_id], references: [id], onDelete: Cascade)
   is_edited Boolean @default(false)
   type post_type @default(text)
+  c_public_id String @default("")
 }
 
 model Friends {
@@ -59,7 +61,9 @@ model Friends {
   user Users @relation("Friends", fields: [user_id], references: [id], onDelete: Cascade)
   friend_id Int
   friend Users @relation("FriendList", fields: [friend_id], references: [id], onDelete: Cascade)
-  status f_status @default(pending)
+  status f_status
+  board_id Int?
+  board Boards? @relation("DM", fields: [board_id], references: [id], onDelete: Cascade)
   @@id([user_id, friend_id])
 }
 
@@ -74,6 +78,7 @@ enum post_type {
 }
 
 enum f_status {
-  pending
+  pending_1_2
+  pending_2_1
   accepted
 }
