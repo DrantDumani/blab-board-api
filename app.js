@@ -38,7 +38,7 @@ const httpServer = app.listen(port, () => {
 });
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "https://blab-board.netlify.app",
   },
 });
 app.set("socketio", io);
